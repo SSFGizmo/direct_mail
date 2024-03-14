@@ -17,7 +17,7 @@ return [
     'directmail_module_directmail' => [
         'parent' => 'directmail',
         'position' => ['top'],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/directmail',
         'iconIdentifier' => 'directmail-module-directmail',
@@ -31,7 +31,7 @@ return [
     'directmail_module_recipientlist' => [
         'parent' => 'directmail',
         'position' => ['after' => 'directmail_module_directmail'],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/recipientlist',
         'iconIdentifier' => 'directmail-module-recipient-list',
@@ -45,7 +45,7 @@ return [
     'directmail_module_importer' => [
         'parent' => 'directmail',
         'position' => ['after' => 'directmail_module_recipientlist'],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/importer',
         'iconIdentifier' => 'directmail-module-importer',
@@ -59,7 +59,7 @@ return [
     'directmail_module_statistics' => [
         'parent' => 'directmail',
         'position' => ['after' => 'directmail_module_importer'],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/statistics',
         'iconIdentifier' => 'directmail-module-statistics',
@@ -73,7 +73,7 @@ return [
     'directmail_module_mailerengine' => [
         'parent' => 'directmail',
         'position' => ['after' => 'directmail_module_statistics'],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/mailerengine',
         'iconIdentifier' => 'directmail-module-mailer-engine',
@@ -87,7 +87,7 @@ return [
     'directmail_module_configuration' => [
         'parent' => 'directmail',
         'position' => ['bottom '],
-        'access' => 'group,user',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/directmail/configuration',
         'iconIdentifier' => 'directmail-module-configuration',
