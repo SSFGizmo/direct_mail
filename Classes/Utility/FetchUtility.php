@@ -6,6 +6,7 @@ namespace DirectMailTeam\DirectMail\Utility;
 
 use DirectMailTeam\DirectMail\Utility\Typo3ConfVarsUtility;
 use GuzzleHttp\Psr7\Response;
+use TYPO3\CMS\Core\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -17,30 +18,19 @@ class FetchUtility
 {
     public function getStreamContext(): \resource
     {
-        $context = null;
-        $applicationContext = Environment::getContext();
-        if ($applicationContext->isDevelopment()) {
-            $context = stream_context_create(
-                [
-                    'ssl' => [
-                        'verify_peer' => Typo3ConfVarsUtility::getDMConfigSSLVerifyPeer(),
-                        'verify_peer_name' => Typo3ConfVarsUtility::getDMConfigSSLVerifyPeerName(),
-                    ],
-                ]
-            );
-        }
-
-        return $context;
+        return stream_context_create(
+            [
+                'ssl' => [
+                    'verify_peer' => Typo3ConfVarsUtility::getDMConfigSSLVerifyPeer(),
+                    'verify_peer_name' => Typo3ConfVarsUtility::getDMConfigSSLVerifyPeerName(),
+                ],
+            ]
+        );
     }
 
     public function getResponse(string $url): Response
     {
-        $context = null;
-        $applicationContext = Environment::getContext();
-        if ($applicationContext->isDevelopment()) {
-            $context = ['verify' => Typo3ConfVarsUtility::getDMConfigSSLVerify()];
-        }
-
+        $context = ['verify' => Typo3ConfVarsUtility::getDMConfigSSLVerify()];
         return GeneralUtility::makeInstance(RequestFactory::class)->request($url, 'GET', $context);
     }
 
