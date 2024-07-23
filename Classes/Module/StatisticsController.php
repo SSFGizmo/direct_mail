@@ -387,7 +387,7 @@ final class StatisticsController extends MainController
             $this->categories = GeneralUtility::makeInstance(TempRepository::class)->makeCategories($this->table, $row, $this->sys_language_uid);
             $data = [
                 'icon'            => $this->iconFactory->getIconForRecord($this->table, $row)->render(),
-                'iconActionsOpen' => $iconActionsOpen = $this->getIconActionsOpen(),
+                'iconActionsOpen' => $this->getIconActionsOpen(),
                 'name'            => htmlspecialchars($row['name']),
                 'email'           => htmlspecialchars($row['email']),
                 'uid'             => $row['uid'],

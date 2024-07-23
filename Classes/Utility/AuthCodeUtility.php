@@ -16,32 +16,18 @@ class AuthCodeUtility
      * @param string $authcodeFieldList
      * @return bool
      */
-    public static function validateAuthCode(string $submittedAuthCode, array $recipientRecord, string $authcodeFieldList = 'uid'): bool
+    public static function validateAuthCode(
+        string $submittedAuthCode, 
+        array $recipientRecord, 
+        string $authcodeFieldList = 'uid'): bool
     {
         if (!empty($submittedAuthCode)) {
             $hmac = self::getHmac($recipientRecord, $authcodeFieldList);
             if ($submittedAuthCode === $hmac) {
                 return true;
             }
-            /**
-             * @TODO remove in v12
-             * for old e-mails
-             */
-            $authCodeToMatch = self::getAuthCode($recipientRecord, $authcodeFieldList);
-            if ($submittedAuthCode === $authCodeToMatch) {
-                return true;
-            }
         }
         return false;
-    }
-
-    /**
-     * @TODO remove in v12
-     * https://docs.typo3.org/c/typo3/cms-core/main/en-us/Changelog/11.3/Deprecation-94309-DeprecatedGeneralUtilitystdAuthCode.html
-     */
-    public static function getAuthCode(array $recipientRecord, string $authcodeFieldList): string
-    {
-        return GeneralUtility::stdAuthCode($recipientRecord, $authcodeFieldList);
     }
 
     public static function getHmac(array $recipientRecord, string $authcodeFieldList): string

@@ -7,6 +7,7 @@ namespace DirectMailTeam\DirectMail\Module;
 use DirectMailTeam\DirectMail\DirectMailUtility;
 use DirectMailTeam\DirectMail\Dmailer;
 use DirectMailTeam\DirectMail\DmQueryGenerator;
+use DirectMailTeam\DirectMail\Enum\DmailCmdEnum;
 use DirectMailTeam\DirectMail\Event\DmailCompileMailGroupEvent;
 use DirectMailTeam\DirectMail\Repository\FeGroupsRepository;
 use DirectMailTeam\DirectMail\Repository\FeUsersRepository;
@@ -145,12 +146,12 @@ final class DmailController extends MainController
 
         $update_cats = $parsedBody['update_cats'] ?? $queryParams['update_cats'] ?? false;
         if ($update_cats) {
-            $this->cmd = 'cats';
+            $this->cmd = DmailCmdEnum::Categories->value;
         }
 
         $this->mailingMode_simple = (bool)($parsedBody['mailingMode_simple'] ?? $queryParams['mailingMode_simple'] ?? false);
         if ($this->mailingMode_simple) {
-            $this->cmd = 'send_mail_test';
+            $this->cmd = DmailCmdEnum::SendMailTest->value;
         }
 
         $this->backButtonPressed = (bool)($parsedBody['back'] ?? $queryParams['back'] ?? false);
@@ -254,7 +255,7 @@ final class DmailController extends MainController
             'data' => [],
         ];
 
-        if ($this->cmd == 'delete') {
+        if ($this->cmd == DmailCmdEnum::Delete->value) {
             $this->deleteDMail($this->uid);
         }
 
@@ -275,25 +276,23 @@ final class DmailController extends MainController
         if ($this->backButtonPressed) {
             // CMD move 1 step back
             switch ($this->currentCMD) {
-                case 'info':
+                case DmailCmdEnum::Info->value:
                     $this->cmd = '';
                     break;
-                case 'cats':
-                    $this->cmd = 'info';
+                case DmailCmdEnum::Categories->value:
+                    $this->cmd = DmailCmdEnum::Info->value;
                     break;
-                case 'send_test':
-                    // Same as send_mail_test
-                case 'send_mail_test':
-                    if (($this->cmd == 'send_mass') && $hideCategoryStep) {
-                        $this->cmd = 'info';
+                case DmailCmdEnum::SendTest->value:
+                case DmailCmdEnum::SendMailTest->value:
+                    if (($this->cmd == DmailCmdEnum::SendMass->value) && $hideCategoryStep) {
+                        $this->cmd = DmailCmdEnum::Info->value;
                     } else {
-                        $this->cmd = 'cats';
+                        $this->cmd = DmailCmdEnum::Categories->value;
                     }
                     break;
-                case 'send_mail_final':
-                    // The same as send_mass
-                case 'send_mass':
-                    $this->cmd = 'send_test';
+                case DmailCmdEnum::SendMailFinal->value:
+                case DmailCmdEnum::SendMass->value:
+                    $this->cmd = DmailCmdEnum::SendTest->value;
                     break;
                 default:
                     // Do nothing
@@ -303,13 +302,13 @@ final class DmailController extends MainController
         $nextCmd = '';
         if ($hideCategoryStep) {
             $totalSteps = 4;
-            if ($this->cmd == 'info') {
-                $nextCmd = 'send_test';
+            if ($this->cmd == DmailCmdEnum::Info->value) {
+                $nextCmd = DmailCmdEnum::SendTest->value;
             }
         } else {
             $totalSteps = 5;
-            if ($this->cmd == 'info') {
-                $nextCmd = 'cats';
+            if ($this->cmd == DmailCmdEnum::Info->value) {
+                $nextCmd = DmailCmdEnum::Categories->value;
             }
         }
 
@@ -325,7 +324,7 @@ final class DmailController extends MainController
         ];
 
         switch ($this->cmd) {
-            case 'info':
+            case DmailCmdEnum::Info->value:
                 // step 2: create the Direct Mail record, or use existing
                 $this->currentStep = 2;
                 $data['navigation']['currentStep'] = $this->currentStep;
@@ -354,7 +353,7 @@ final class DmailController extends MainController
                             $fetchError = ((strstr($fetchMessage, $this->languageService->sL($this->lllFile . ':dmail_error')) === false) ? false : true);
                         }
 
-                        $data['info']['internal']['cmd'] = $nextCmd ? $nextCmd : 'cats';
+                        $data['info']['internal']['cmd'] = $nextCmd ? $nextCmd : DmailCmdEnum::Categories->value;
                     }
                 // TODO: Error message - Error while adding the DB set
                 }
@@ -377,7 +376,7 @@ final class DmailController extends MainController
                             $fetchError = ((strstr($fetchMessage, $this->languageService->sL($this->lllFile . ':dmail_error')) === false) ? false : true);
                         }
 
-                        $data['info']['external']['cmd'] = 'send_test';
+                        $data['info']['external']['cmd'] = DmailCmdEnum::SendTest->value;
                     } else {
                         // TODO: Error message - Error while adding the DB set
                         $this->error = 'no_valid_url';
@@ -398,7 +397,7 @@ final class DmailController extends MainController
 
                     $row = BackendUtility::getRecord('sys_dmail', $this->sys_dmail_uid);
 
-                    $data['info']['quickmail']['cmd'] = 'send_test';
+                    $data['info']['quickmail']['cmd'] = DmailCmdEnum::SendTest->value;
                     $data['info']['quickmail']['senderName'] = htmlspecialchars($quickmail['senderName'] ?? '');
                     $data['info']['quickmail']['senderEmail'] = htmlspecialchars($quickmail['senderEmail'] ?? '');
                     $data['info']['quickmail']['subject'] = htmlspecialchars($quickmail['subject'] ?? '');
@@ -411,7 +410,7 @@ final class DmailController extends MainController
                         // it's a quickmail
                         $fetchError = false;
 
-                        $data['info']['dmail']['cmd'] = 'send_test';
+                        $data['info']['dmail']['cmd'] = DmailCmdEnum::SendTest->value;
 
                         // add attachment here, since attachment added in 2nd step
                         $unserializedMailContent = unserialize(base64_decode($row['mailContent'] ?: ''));
@@ -428,7 +427,7 @@ final class DmailController extends MainController
                             $fetchError = ((strstr($fetchMessage, $this->languageService->sL($this->lllFile . ':dmail_error')) === false) ? false : true);
                         }
 
-                        $data['info']['dmail']['cmd'] = ($row['type'] == 0) ? $nextCmd : 'send_test';
+                        $data['info']['dmail']['cmd'] = ($row['type'] == 0) ? $nextCmd : DmailCmdEnum::SendTest->value;
                     }
                 }
 
@@ -453,7 +452,7 @@ final class DmailController extends MainController
                 $data['info']['currentCMD'] = $this->cmd;
                 break;
 
-            case 'cats':
+            case DmailCmdEnum::Categories->value:
                 // shows category if content-based cat
                 $this->currentStep = 3;
                 $data['navigation']['currentStep'] = $this->currentStep;
@@ -468,15 +467,14 @@ final class DmailController extends MainController
                 $data['cats']['output'] = $temp['output'];
                 $data['cats']['catsForm'] = $temp['theOutput'];
 
-                $data['cats']['cmd'] = 'send_test';
+                $data['cats']['cmd'] = DmailCmdEnum::SendTest->value;
                 $data['cats']['sys_dmail_uid'] = $this->sys_dmail_uid;
                 $data['cats']['pages_uid'] = $this->pages_uid;
                 $data['cats']['currentCMD'] = $this->cmd;
                 break;
 
-            case 'send_test':
-                // Same as send_mail_test
-            case 'send_mail_test':
+            case DmailCmdEnum::SendTest->value:
+            case DmailCmdEnum::SendMailTest->value:
                 // send test mail
                 $this->currentStep = (4 - (5 - $totalSteps));
                 $data['navigation']['currentStep'] = $this->currentStep;
@@ -487,30 +485,29 @@ final class DmailController extends MainController
                 $data['navigation']['back'] = true;
                 $data['navigation']['next'] = true;
 
-                if ($this->cmd == 'send_mail_test') {
+                if ($this->cmd == DmailCmdEnum::SendMailTest->value) {
                     $this->sendMail($row);
                 }
                 $data['test']['testFormData'] = $this->getTestMailConfig();
-                $data['test']['cmd'] = 'send_mass';
+                $data['test']['cmd'] = DmailCmdEnum::SendMass->value;
                 $data['test']['sys_dmail_uid'] = $this->sys_dmail_uid;
                 $data['test']['pages_uid'] = $this->pages_uid;
                 $data['test']['currentCMD'] = $this->cmd;
                 break;
 
-            case 'send_mail_final':
-                // same as send_mass
-            case 'send_mass':
+            case DmailCmdEnum::SendMailFinal->value:
+            case DmailCmdEnum::SendMass->value:
                 $this->currentStep = (5 - (5 - $totalSteps));
                 $data['navigation']['currentStep'] = $this->currentStep;
                 $data['final'] = [
                     'currentStep' => $this->currentStep,
                 ];
 
-                if ($this->cmd == 'send_mass') {
+                if ($this->cmd == DmailCmdEnum::SendMass->value) {
                     $data['navigation']['back'] = true;
                 }
 
-                if ($this->cmd == 'send_mail_final') {
+                if ($this->cmd == DmailCmdEnum::SendMailFinal->value) {
                     if (is_array($this->mailgroup_uid) && count($this->mailgroup_uid)) {
                         $this->sendMail($row);
                         break;
@@ -526,7 +523,7 @@ final class DmailController extends MainController
                 }
                 // send mass, show calendar
                 $data['final']['finalForm'] = $this->cmd_finalmail($row);
-                $data['final']['cmd'] = 'send_mail_final';
+                $data['final']['cmd'] = DmailCmdEnum::SendMailFinal->value;
                 $data['final']['sys_dmail_uid'] = $this->sys_dmail_uid;
                 $data['final']['pages_uid'] = $this->pages_uid;
                 $data['final']['currentCMD'] = $this->cmd;
@@ -626,7 +623,7 @@ final class DmailController extends MainController
                         'id' => $this->id,
                         'createMailFrom_UID' => $row['uid'],
                         'fetchAtOnce' => 1,
-                        'cmd' => 'info',
+                        'cmd' => DmailCmdEnum::Info->value,
                     ]
                 );
 
@@ -912,7 +909,7 @@ final class DmailController extends MainController
                 'id' => $this->id,
                 'sys_dmail_uid' => $uid,
                 'fetchAtOnce' => 1,
-                'cmd' => 'info',
+                'cmd' => DmailCmdEnum::Info->value,
             ]
         );
     }
@@ -935,7 +932,7 @@ final class DmailController extends MainController
                 [
                     'id' => $this->id,
                     'uid' => $uid,
-                    'cmd' => 'delete',
+                    'cmd' => DmailCmdEnum::Delete->value,
                 ]
             );
         }
@@ -1019,7 +1016,7 @@ final class DmailController extends MainController
                         'id' => $this->id,
                         'sys_dmail_uid' => $row['uid'],
                         'fetchAtOnce' => 1,
-                        'cmd' => 'info',
+                        'cmd' => DmailCmdEnum::Info->value,
                     ]
                 );
 
@@ -1089,7 +1086,7 @@ final class DmailController extends MainController
         ];
 
         if ($this->params['test_tt_address_uids'] ?? false) {
-            // https://api.typo3.org/11.5/class_t_y_p_o3_1_1_c_m_s_1_1_core_1_1_utility_1_1_general_utility.html#a87225a3db04071355a62a36ed8636add
+            // https://api.typo3.org/12.4/class_t_y_p_o3_1_1_c_m_s_1_1_core_1_1_utility_1_1_general_utility.html#a87225a3db04071355a62a36ed8636add
             $intList = GeneralUtility::intExplode(',', $this->params['test_tt_address_uids'], true);
             $rows = GeneralUtility::makeInstance(TtAddressRepository::class)->selectTtAddressForTestmail($intList, $this->perms_clause);
             $ids = [];
@@ -1110,7 +1107,7 @@ final class DmailController extends MainController
                     [
                         'id' => $this->id,
                         'sys_dmail_uid' => $this->sys_dmail_uid,
-                        'cmd' => 'send_mail_test',
+                        'cmd' => DmailCmdEnum::SendMailTest->value,
                         'sys_dmail_group_uid[]' => $row['uid'],
                     ]
                 );
@@ -1130,7 +1127,7 @@ final class DmailController extends MainController
 
         $data['dmail_test_email'] = $this->MOD_SETTINGS['dmail_test_email'] ?? '';
         $data['id'] = $this->id;
-        $data['cmd'] = 'send_mail_test';
+        $data['cmd'] = DmailCmdEnum::SendMailTest->value;
         $data['sys_dmail_uid'] = $this->sys_dmail_uid;
 
         return $data;
@@ -1219,7 +1216,7 @@ final class DmailController extends MainController
                 );
                 $this->flashMessageQueue->addMessage($message);
             }
-        } elseif ($this->cmd == 'send_mail_test') {
+        } elseif ($this->cmd == DmailCmdEnum::SendMailTest->value) {
             // step 4, sending test personalized test emails
             // setting Testmail flag
             $htmlmail->setTestmail((bool)$this->params['testmail']);
@@ -1321,7 +1318,7 @@ final class DmailController extends MainController
         }
 
         // Setting flags and update the record:
-        if ($sentFlag && $this->cmd == 'send_mail_final') {
+        if ($sentFlag && $this->cmd == DmailCmdEnum::SendMailFinal->value) {
             $done = GeneralUtility::makeInstance(SysDmailRepository::class)->updateSysDmailRecord(
                 (int)$this->sys_dmail_uid,
                 ['issent' => 1]
@@ -1395,7 +1392,7 @@ final class DmailController extends MainController
                                     $row['uid'] => 'edit',
                                 ],
                             ],
-                            'returnUrl' => $this->requestUri . '&cmd=send_test&sys_dmail_uid=' . $this->sys_dmail_uid . '&pages_uid=' . $this->pages_uid,
+                            'returnUrl' => $this->requestUri . '&cmd=' . DmailCmdEnum::SendTest->value . '&sys_dmail_uid=' . $this->sys_dmail_uid . '&pages_uid=' . $this->pages_uid,
                         ];
 
                         $editOnClick = $this->getEditOnClickLink($params);
@@ -1407,7 +1404,7 @@ final class DmailController extends MainController
                             [
                                 'id' => $this->id,
                                 'sys_dmail_uid' => $this->sys_dmail_uid,
-                                'cmd' => 'send_mail_test',
+                                'cmd' => DmailCmdEnum::SendMailTest->value,
                                 'tt_address_uid' => $row['uid'],
                             ]
                         );
@@ -1921,8 +1918,8 @@ final class DmailController extends MainController
         // Fetch page title from translated page
         if ($newRecord['sys_language_uid'] > 0) {
             $pageRecordOverlay = GeneralUtility::makeInstance(PagesRepository::class)->selectTitleTranslatedPage($pageUid, (int)$newRecord['sys_language_uid']);
-            if (is_array($pageRecordOverlay)) {
-                $pageRecord['title'] = $pageRecordOverlay['title'];
+            if ($pageRecordOverlay !== false && $pageRecordOverlay !== '') {
+                $pageRecord['title'] = $pageRecordOverlay;
             }
         }
 
